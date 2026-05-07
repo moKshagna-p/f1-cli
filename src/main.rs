@@ -74,7 +74,6 @@ async fn run_app(
     app: &mut App,
 ) -> Result<()> {
     let mut ticker = interval(Duration::from_millis(200)); // 200ms for smooth UI
-    let mut api_ticker = interval(Duration::from_secs(2)); // 2s polling
     let mut last_api_poll = Instant::now();
     
     loop {

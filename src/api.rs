@@ -56,10 +56,12 @@ pub struct Weather {
 
 #[derive(Debug, Clone)]
 pub struct Telemetry {
+    #[allow(dead_code)]
     pub drivers: Vec<Driver>,
     pub positions: Vec<Position>,
     pub laps: Vec<Lap>,
     pub pit_stops: Vec<PitStop>,
+    #[allow(dead_code)]
     pub weather: Vec<Weather>,
 }
 

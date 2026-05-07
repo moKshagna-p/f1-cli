@@ -14,6 +14,7 @@ pub struct DriverStanding {
     pub tyres: String,
     pub drs: bool,
     pub pit_stops: i32,
+    #[allow(dead_code)]
     pub team: String,
     pub team_color: String,
     pub is_fastest_lap: bool,
@@ -22,6 +23,7 @@ pub struct DriverStanding {
 
 pub struct AppState {
     pub session: Session,
+    #[allow(dead_code)]
     pub drivers: Vec<Driver>,
     pub standings: Vec<DriverStanding>,
     pub fastest_lap_driver: i32,
@@ -145,6 +147,7 @@ impl AppState {
         self.animation_timer = 0;
     }
 
+    #[allow(dead_code)]
     pub fn tick(&mut self) {
         self.animation_timer = self.animation_timer.saturating_add(1);
         // Fade animation after 15 ticks (3 seconds at 200ms per tick)
