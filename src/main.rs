@@ -15,6 +15,15 @@ use tokio::time::interval;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Check if stdout is a TTY
+    if !atty::is(atty::Stream::Stdout) {
+        eprintln!("❌ Error: This application requires an interactive terminal");
+        eprintln!("   Please run from a terminal window, not from a pipe or script");
+        eprintln!();
+        eprintln!("   Usage: ./target/release/f1-dashboard");
+        return Err(anyhow::anyhow!("Not a TTY"));
+    }
+
     // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
