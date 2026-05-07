@@ -23,7 +23,7 @@ const cache = {
 async function fetchSessions() {
   try {
     logger.debug('Fetching sessions...');
-    const url = `${API_BASE_URL}${ENDPOINTS.SESSIONS}?limit=50`;
+    const url = `${API_BASE_URL}${ENDPOINTS.SESSIONS}`;
     const response = await axios.get(url, { timeout: 5000 });
     const sessions = response.data || [];
 
