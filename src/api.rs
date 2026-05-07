@@ -71,7 +71,7 @@ pub async fn fetch_sessions() -> Result<Session> {
     
     let sessions: Vec<Session> = client
         .get(&url)
-        .timeout(std::time::Duration::from_secs(5))
+        .timeout(std::time::Duration::from_secs(15))
         .send()
         .await?
         .json()
@@ -95,7 +95,7 @@ pub async fn fetch_drivers() -> Result<Vec<Driver>> {
     
     let drivers: Vec<Driver> = client
         .get(&url)
-        .timeout(std::time::Duration::from_secs(5))
+        .timeout(std::time::Duration::from_secs(15))
         .send()
         .await?
         .json()
@@ -126,25 +126,25 @@ pub async fn fetch_all_telemetry(session_key: &str) -> Result<Telemetry> {
 
 async fn fetch_drivers_internal(client: &reqwest::Client) -> Result<Vec<Driver>> {
     let url = format!("{}/drivers", API_BASE);
-    Ok(client.get(&url).send().await?.json().await?)
+    Ok(client.get(&url).timeout(std::time::Duration::from_secs(15)).send().await?.json().await?)
 }
 
 async fn fetch_positions(client: &reqwest::Client, session_key: &str) -> Result<Vec<Position>> {
     let url = format!("{}/position?session_key={}", API_BASE, session_key);
-    Ok(client.get(&url).send().await?.json().await?)
+    Ok(client.get(&url).timeout(std::time::Duration::from_secs(15)).send().await?.json().await?)
 }
 
 async fn fetch_laps(client: &reqwest::Client, session_key: &str) -> Result<Vec<Lap>> {
     let url = format!("{}/laps?session_key={}&limit=1000", API_BASE, session_key);
-    Ok(client.get(&url).send().await?.json().await?)
+    Ok(client.get(&url).timeout(std::time::Duration::from_secs(15)).send().await?.json().await?)
 }
 
 async fn fetch_pit_stops(client: &reqwest::Client, session_key: &str) -> Result<Vec<PitStop>> {
     let url = format!("{}/pit?session_key={}", API_BASE, session_key);
-    Ok(client.get(&url).send().await?.json().await?)
+    Ok(client.get(&url).timeout(std::time::Duration::from_secs(15)).send().await?.json().await?)
 }
 
 async fn fetch_weather(client: &reqwest::Client, session_key: &str) -> Result<Vec<Weather>> {
     let url = format!("{}/weather?session_key={}", API_BASE, session_key);
-    Ok(client.get(&url).send().await?.json().await?)
+    Ok(client.get(&url).timeout(std::time::Duration::from_secs(15)).send().await?.json().await?)
 }

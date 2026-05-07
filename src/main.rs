@@ -33,7 +33,22 @@ async fn main() -> Result<()> {
     terminal.clear()?;
 
     // Initialize app
-    let mut app = App::new().await?;
+    let mut app = match App::new().await {
+        Ok(app) => app,
+        Err(e) => {
+            eprintln!();
+            eprintln!("❌ Failed to initialize dashboard:");
+            eprintln!("   {}", e);
+            eprintln!();
+            eprintln!("💡 Tips:");
+            eprintln!("   • Check your internet connection");
+            eprintln!("   • Verify OpenF1 API is accessible:");
+            eprintln!("     curl https://api.openf1.org/v1/sessions");
+            eprintln!("   • Try again in a moment");
+            eprintln!();
+            return Err(e);
+        }
+    };
 
     // Main loop
     let result = run_app(&mut terminal, &mut app).await;
@@ -48,6 +63,7 @@ async fn main() -> Result<()> {
 
     if let Err(e) = result {
         eprintln!("Error: {}", e);
+        std::process::exit(1);
     }
 
     Ok(())
@@ -64,11 +80,16 @@ impl App {
         println!("🏁 F1 Telemetry Dashboard - Initializing...");
         
         // Fetch initial data
+        println!("   ⏳ Fetching sessions (this may take a moment)...");
         let session = api::fetch_sessions().await?;
-        let drivers = api::fetch_drivers().await?;
+        println!("   ✓ Session: {}", session.circuit_short_name);
         
-        println!("✓ Session: {:?}", session.circuit_short_name);
-        println!("✓ Drivers loaded: {}", drivers.len());
+        println!("   ⏳ Loading drivers...");
+        let drivers = api::fetch_drivers().await?;
+        println!("   ✓ Drivers loaded: {}", drivers.len());
+        
+        println!("   ✓ Dashboard ready!");
+        println!();
         
         Ok(Self {
             state: state::AppState::new(session, drivers),
