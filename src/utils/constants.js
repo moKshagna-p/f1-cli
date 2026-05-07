@@ -8,7 +8,7 @@ const MAX_RETRIES = 5;
 const RETRY_DELAY = 1000; // milliseconds
 const POSITION_ANIMATION_DURATION = 3000; // milliseconds
 
-const API_BASE_URL = 'https://openf1.org/v1';
+const API_BASE_URL = 'https://api.openf1.org/v1';
 
 const ENDPOINTS = {
   SESSIONS: '/sessions',
