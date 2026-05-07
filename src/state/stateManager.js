@@ -1,7 +1,12 @@
 /**
- * State management with efficient diffing
- * Tracks changes between poll cycles for minimal UI updates
+ * State Manager
+ * Manages application state with efficient diffing
  */
+
+const Logger = require('../utils/logger');
+const { POSITION_ANIMATION_DURATION } = require('../utils/constants');
+
+const logger = new Logger('StateManager');
 
 const state = {
   session: null,
@@ -10,12 +15,12 @@ const state = {
   laps: new Map(),
   pits: new Map(),
   weather: [],
-  
+
   // Animation tracking
   positionChanges: new Map(), // driver -> { from, to, timestamp }
   fastestLapHolder: null,
   previousFastestLapHolder: null,
-  
+
   // Metadata
   isLive: false,
   lastUpdate: null,
@@ -23,7 +28,7 @@ const state = {
 };
 
 /**
- * Compare two objects for equality
+ * Deep equality check
  */
 function deepEqual(obj1, obj2) {
   if (obj1 === obj2) return true;
@@ -32,19 +37,19 @@ function deepEqual(obj1, obj2) {
 
   const keys1 = Object.keys(obj1);
   const keys2 = Object.keys(obj2);
-  
+
   if (keys1.length !== keys2.length) return false;
-  
+
   for (const key of keys1) {
     if (!keys2.includes(key)) return false;
     if (!deepEqual(obj1[key], obj2[key])) return false;
   }
-  
+
   return true;
 }
 
 /**
- * Update state with new telemetry data and track changes
+ * Update state with new telemetry and track changes
  */
 function updateState(newTelemetry) {
   const changes = {
@@ -58,12 +63,13 @@ function updateState(newTelemetry) {
   if (newTelemetry.session && !deepEqual(state.session, newTelemetry.session)) {
     state.session = newTelemetry.session;
     state.lastUpdate = Date.now();
+    logger.debug('Session updated');
   }
 
   // Update drivers
   if (newTelemetry.drivers && Array.isArray(newTelemetry.drivers)) {
-    const newDriverMap = new Map(newTelemetry.drivers.map(d => [d.driver_number, d]));
-    
+    const newDriverMap = new Map(newTelemetry.drivers.map((d) => [d.driver_number, d]));
+
     newDriverMap.forEach((driver, number) => {
       const oldDriver = state.drivers.get(number);
       if (!deepEqual(driver, oldDriver)) {
@@ -75,8 +81,8 @@ function updateState(newTelemetry) {
 
   // Update positions and detect changes
   if (newTelemetry.positions && Array.isArray(newTelemetry.positions)) {
-    const byDriver = new Map(newTelemetry.positions.map(p => [p.driver_number, p]));
-    
+    const byDriver = new Map(newTelemetry.positions.map((p) => [p.driver_number, p]));
+
     byDriver.forEach((pos, driverNum) => {
       const oldPos = state.positions.get(driverNum);
       if (oldPos && oldPos.position !== pos.position) {
@@ -86,6 +92,7 @@ function updateState(newTelemetry) {
           timestamp: Date.now(),
         });
         changes.positionChanges.push(driverNum);
+        logger.debug(`Position change: Driver ${driverNum} ${oldPos.position} → ${pos.position}`);
       }
       state.positions.set(driverNum, pos);
     });
@@ -94,8 +101,8 @@ function updateState(newTelemetry) {
   // Update laps and find fastest lap holder
   if (newTelemetry.laps && Array.isArray(newTelemetry.laps)) {
     const lapsByDriver = new Map();
-    
-    newTelemetry.laps.forEach(lap => {
+
+    newTelemetry.laps.forEach((lap) => {
       if (!lapsByDriver.has(lap.driver_number)) {
         lapsByDriver.set(lap.driver_number, lap);
       } else {
@@ -117,7 +124,7 @@ function updateState(newTelemetry) {
     // Find fastest lap holder
     let fastestLap = null;
     let fastestDriver = null;
-    
+
     state.laps.forEach((lap, driverNum) => {
       if (lap.lap_duration && (!fastestLap || lap.lap_duration < fastestLap)) {
         fastestLap = lap.lap_duration;
@@ -132,7 +139,7 @@ function updateState(newTelemetry) {
   // Update pits
   if (newTelemetry.pits && Array.isArray(newTelemetry.pits)) {
     const pitsByDriver = new Map();
-    newTelemetry.pits.forEach(pit => {
+    newTelemetry.pits.forEach((pit) => {
       if (!pitsByDriver.has(pit.driver_number)) {
         pitsByDriver.set(pit.driver_number, 0);
       }
@@ -159,7 +166,7 @@ function updateState(newTelemetry) {
   // Cleanup old position changes (animations)
   const now = Date.now();
   state.positionChanges.forEach((change, driver) => {
-    if (now - change.timestamp > 3000) {
+    if (now - change.timestamp > POSITION_ANIMATION_DURATION) {
       state.positionChanges.delete(driver);
     }
   });
@@ -171,7 +178,7 @@ function updateState(newTelemetry) {
 }
 
 /**
- * Get current state snapshot
+ * Get state snapshot
  */
 function getState() {
   return {
@@ -203,10 +210,11 @@ function resetState() {
   state.fastestLapHolder = null;
   state.previousFastestLapHolder = null;
   state.lastUpdate = null;
+  logger.info('State reset');
 }
 
 /**
- * Set polling error message
+ * Set polling error
  */
 function setPollingError(error) {
   state.pollingError = error;

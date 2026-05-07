@@ -1,0 +1,250 @@
+F1 TELEMETRY DASHBOARD - PROJECT STRUCTURE
+============================================
+
+f1-telemetry-dashboard/
+│
+├── 📁 src/                               [Main Application Code]
+│   ├── 📁 api/
+│   │   └── 📄 openf1Client.js           [OpenF1 API client - 6 endpoints]
+│   │
+│   ├── 📁 state/
+│   │   └── 📄 stateManager.js           [State management with efficient diffing]
+│   │
+│   ├── 📁 ui/
+│   │   ├── 📄 renderer.js               [Terminal rendering engine]
+│   │   ├── 📄 formatters.js             [Data formatting utilities]
+│   │   └── 📄 colors.js                 [ANSI color utilities]
+│   │
+│   ├── 📁 utils/
+│   │   ├── 📄 constants.js              [Configuration constants]
+│   │   ├── 📄 logger.js                 [Logging utility]
+│   │   └── 📄 errorHandler.js           [Error handling utilities]
+│   │
+│   └── 📄 index.js                      [Main F1Dashboard class]
+│
+├── 📁 docs/                             [Documentation]
+│   ├── 📄 ARCHITECTURE.md               [Code structure & design patterns]
+│   ├── 📄 SETUP.md                      [Installation & configuration]
+│   └── 📄 API.md                        [API documentation]
+│
+├── 📁 config/                           [Configuration files]
+│   ├── 📄 .editorconfig                 [Editor settings]
+│   └── 📄 .gitignore                    [Git ignore rules]
+│
+├── 📄 index.js                          [Application entry point]
+├── 📄 package.json                      [Dependencies & scripts]
+├── 📄 package-lock.json                 [Locked versions]
+│
+├── 📄 README.md                         [User guide & features]
+├── 📄 QUICKSTART.md                     [2-minute quick start]
+├── 📄 IMPLEMENTATION_SUMMARY.md         [Technical summary]
+└── 📄 PROJECT_STRUCTURE.txt             [This file]
+
+KEY FEATURES OF NEW STRUCTURE
+==============================
+
+✅ Clear Separation of Concerns
+   - API layer handles all HTTP communication
+   - State layer manages data and changes
+   - UI layer handles rendering
+   - Utils provide shared functionality
+
+✅ Modular Design
+   - Each file has single responsibility
+   - Easy to understand and modify
+   - Simple to test individual modules
+   - Good for collaboration
+
+✅ Scalable Architecture
+   - Easy to add new features
+   - Easy to add new API endpoints
+   - Easy to add new UI components
+   - Easy to modify state management
+
+✅ Professional Organization
+   - Clean file structure
+   - Clear module dependencies
+   - Comprehensive documentation
+   - Production-ready code quality
+
+WHAT CHANGED
+============
+
+OLD STRUCTURE:
+├── api.js
+├── state.js
+├── ui.js
+├── index.js
+└── docs...
+
+NEW STRUCTURE:
+├── src/
+│   ├── api/
+│   ├── state/
+│   ├── ui/
+│   ├── utils/
+│   └── index.js
+├── docs/
+├── config/
+└── index.js (entry point)
+
+BENEFITS
+========
+
+Before (Flat):
+- All code at root level
+- Hard to find specific functionality
+- Difficult to scale
+- Confusing for new developers
+
+After (Organized):
+- Clear module organization
+- Easy to locate code
+- Simple to add features
+- Self-documenting structure
+
+FILE PURPOSES
+=============
+
+src/api/openf1Client.js
+  └─ All OpenF1 API communication
+    ├─ fetchSessions()
+    ├─ fetchDrivers()
+    ├─ fetchPositions()
+    ├─ fetchLaps()
+    ├─ fetchPitStops()
+    ├─ fetchWeather()
+    └─ fetchAllTelemetry()
+
+src/state/stateManager.js
+  └─ Application state management
+    ├─ updateState()
+    ├─ getState()
+    ├─ resetState()
+    ├─ setPollingError()
+    └─ deepEqual() (diffing)
+
+src/ui/renderer.js
+  └─ Terminal dashboard rendering
+    ├─ render()
+    ├─ buildDashboard()
+    ├─ buildHeader()
+    ├─ buildStandings()
+    └─ buildTicker()
+
+src/ui/formatters.js
+  └─ Data formatting for display
+    ├─ formatTime()
+    ├─ formatGap()
+    ├─ formatTyre()
+    ├─ formatDRS()
+    ├─ formatLapTime()
+    └─ formatSector()
+
+src/ui/colors.js
+  └─ ANSI color handling
+    ├─ hexToAnsi256()
+    ├─ colorize256()
+    ├─ getTeamColorSwatch()
+    └─ getTyreColor()
+
+src/utils/constants.js
+  └─ Configuration & constants
+    ├─ POLLING_INTERVAL
+    ├─ API_BASE_URL
+    ├─ ENDPOINTS
+    └─ DISPLAY_LIMITS
+
+src/utils/logger.js
+  └─ Logging utility
+    ├─ debug()
+    ├─ info()
+    ├─ warn()
+    └─ error()
+
+src/utils/errorHandler.js
+  └─ Error handling
+    ├─ handleApiError()
+    ├─ isRetryable()
+    ├─ getBackoffDelay()
+    └─ formatErrorMessage()
+
+src/index.js
+  └─ Main F1Dashboard class
+    ├─ initialize()
+    ├─ poll()
+    └─ shutdown()
+
+index.js (root)
+  └─ Application entry point
+    ├─ Creates dashboard
+    └─ Sets up signal handlers
+
+IMPORT EXAMPLES
+===============
+
+// Old way (flat):
+const api = require('./api');
+
+// New way (organized):
+const api = require('./src/api/openf1Client');
+
+// Import from different modules:
+const stateManager = require('./src/state/stateManager');
+const renderer = require('./src/ui/renderer');
+const Logger = require('./src/utils/logger');
+
+HOW TO NAVIGATE
+===============
+
+To understand the flow:
+1. Start at index.js (entry point)
+2. Read src/index.js (main class)
+3. Follow the poll() method
+4. See how it calls:
+   - api.fetchAllTelemetry()
+   - stateManager.updateState()
+   - renderer.render()
+
+To modify a feature:
+1. If it's API-related → edit src/api/openf1Client.js
+2. If it's state-related → edit src/state/stateManager.js
+3. If it's display-related → edit src/ui/renderer.js, formatters.js, or colors.js
+4. If it's configuration → edit src/utils/constants.js
+
+To add a new feature:
+1. API endpoint? → Add to src/api/openf1Client.js
+2. New state? → Update src/state/stateManager.js
+3. New display? → Update src/ui/renderer.js and formatters.js
+4. New configuration? → Add to src/utils/constants.js
+
+DOCUMENTATION GUIDE
+===================
+
+docs/ARCHITECTURE.md
+  ├─ Complete architecture overview
+  ├─ Module responsibilities
+  ├─ Data flow diagrams
+  ├─ Key design decisions
+  └─ How to extend the codebase
+
+docs/SETUP.md
+  ├─ Installation steps
+  ├─ Configuration guide
+  ├─ Troubleshooting
+  ├─ Verification checklist
+  └─ Common issues & solutions
+
+README.md
+  ├─ Feature list
+  ├─ Quick start
+  ├─ Terminal compatibility
+  ├─ Performance metrics
+  └─ License
+
+QUICKSTART.md
+  ├─ 2-minute guide
+  ├─ Visual diagrams
+  ├─ Learning path
+  └─ Quick reference
+
