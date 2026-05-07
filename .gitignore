@@ -38,3 +38,8 @@ out/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+
+# Added by cargo
+
+/target
