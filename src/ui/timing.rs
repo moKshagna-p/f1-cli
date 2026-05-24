@@ -17,8 +17,8 @@ pub fn draw_timing(f: &mut Frame, area: Rect, app: &App) {
     let fastest_s3 = app.state.fastest_s3();
 
     let header_cells = [
-        "POS", "  DRIVER", "TEAM", "GAP", "INTVL", "LAP", "LAP TIME",
-        "  S1   ", "  S2   ", "  S3   ", "PITS",
+        "POS", "  DRIVER", "TEAM", "GAP", "INTVL", "LAP", "LAP TIME", "  S1   ", "  S2   ",
+        "  S3   ", "PITS",
     ]
     .iter()
     .map(|h| Cell::from(*h).style(style_bold(ACCENT_GOLD)));
@@ -35,17 +35,17 @@ pub fn draw_timing(f: &mut Frame, area: Rect, app: &App) {
         .collect();
 
     let widths = [
-        Constraint::Length(5),   // POS
-        Constraint::Length(10),  // DRIVER
-        Constraint::Length(14),  // TEAM
-        Constraint::Length(10),  // GAP
-        Constraint::Length(9),   // INTERVAL
-        Constraint::Length(4),   // LAP #
-        Constraint::Length(9),   // LAP TIME
-        Constraint::Length(8),   // S1
-        Constraint::Length(8),   // S2
-        Constraint::Length(8),   // S3
-        Constraint::Length(4),   // PITS
+        Constraint::Length(5),  // POS
+        Constraint::Length(10), // DRIVER
+        Constraint::Length(14), // TEAM
+        Constraint::Length(10), // GAP
+        Constraint::Length(9),  // INTERVAL
+        Constraint::Length(4),  // LAP #
+        Constraint::Length(9),  // LAP TIME
+        Constraint::Length(8),  // S1
+        Constraint::Length(8),  // S2
+        Constraint::Length(8),  // S3
+        Constraint::Length(4),  // PITS
     ];
 
     let mut table_state = TableState::default();
@@ -65,7 +65,11 @@ pub fn draw_timing(f: &mut Frame, area: Rect, app: &App) {
                 .border_style(Style::default().fg(BORDER_FOCUS))
                 .style(Style::default().bg(BG)),
         )
-        .highlight_style(Style::default().bg(BG_SELECTED).add_modifier(Modifier::BOLD));
+        .highlight_style(
+            Style::default()
+                .bg(BG_SELECTED)
+                .add_modifier(Modifier::BOLD),
+        );
 
     f.render_stateful_widget(table, area, &mut table_state);
 }
@@ -80,9 +84,9 @@ fn make_timing_row<'a>(
 
     // POS with delta
     let (arrow, arrow_color) = match s.position_delta {
-        1  => ("▲", ACCENT_GREEN),
+        1 => ("▲", ACCENT_GREEN),
         -1 => ("▼", LIVE_RED),
-        _  => (" ", BG),
+        _ => (" ", BG),
     };
     let pos_cell = Cell::from(Line::from(vec![
         Span::styled(arrow, style_bold(arrow_color)),
@@ -91,7 +95,7 @@ fn make_timing_row<'a>(
 
     // Driver
     let indicator = if s.is_fastest_lap { "● " } else { "  " };
-    let ind_color  = if s.is_fastest_lap { ACCENT_PURPLE } else { BG };
+    let ind_color = if s.is_fastest_lap { ACCENT_PURPLE } else { BG };
     let drv_cell = Cell::from(Line::from(vec![
         Span::styled(indicator, style_bold(ind_color)),
         Span::styled(s.acronym.clone(), style_bold(driver_color)),
@@ -119,12 +123,17 @@ fn make_timing_row<'a>(
 
     // Lap number
     let lap_num_cell = Cell::from(Span::styled(
-        if s.lap_number > 0 { format!("L{}", s.lap_number) } else { "—".to_string() },
+        if s.lap_number > 0 {
+            format!("L{}", s.lap_number)
+        } else {
+            "—".to_string()
+        },
         style_dim(TEXT_SECONDARY),
     ));
 
     // Lap time
-    let lap_time_str = s.lap_time
+    let lap_time_str = s
+        .lap_time
         .map(format_lap_time)
         .unwrap_or_else(|| "  —:—".to_string());
     let lap_time_cell = Cell::from(Span::styled(
@@ -143,7 +152,11 @@ fn make_timing_row<'a>(
 
     // Pit stops
     let pit_cell = Cell::from(Span::styled(
-        if s.pit_stops > 0 { s.pit_stops.to_string() } else { "—".to_string() },
+        if s.pit_stops > 0 {
+            s.pit_stops.to_string()
+        } else {
+            "—".to_string()
+        },
         style_normal(TEXT_DIM),
     ));
 
@@ -154,8 +167,17 @@ fn make_timing_row<'a>(
     };
 
     Row::new(vec![
-        pos_cell, drv_cell, team_cell, gap_cell, int_cell,
-        lap_num_cell, lap_time_cell, s1_cell, s2_cell, s3_cell, pit_cell,
+        pos_cell,
+        drv_cell,
+        team_cell,
+        gap_cell,
+        int_cell,
+        lap_num_cell,
+        lap_time_cell,
+        s1_cell,
+        s2_cell,
+        s3_cell,
+        pit_cell,
     ])
     .height(1)
     .style(bg)
@@ -163,9 +185,16 @@ fn make_timing_row<'a>(
 
 fn sector_cell(time: Option<f64>, is_fastest: bool) -> Cell<'static> {
     match time {
-        None => Cell::from(Span::styled("  —    ".to_string(), style_dim(SECTOR_NO_DATA))),
+        None => Cell::from(Span::styled(
+            "  —    ".to_string(),
+            style_dim(SECTOR_NO_DATA),
+        )),
         Some(t) => {
-            let color = if is_fastest { SECTOR_FASTEST } else { SECTOR_NORMAL };
+            let color = if is_fastest {
+                SECTOR_FASTEST
+            } else {
+                SECTOR_NORMAL
+            };
             let prefix = if is_fastest { "▌" } else { " " };
             Cell::from(Span::styled(
                 format!("{}{:06.3}", prefix, t),

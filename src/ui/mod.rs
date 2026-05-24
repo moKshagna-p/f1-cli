@@ -25,9 +25,9 @@ pub fn draw(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(3),  // header
-            Constraint::Min(1),     // body
-            Constraint::Length(1),  // footer
+            Constraint::Length(3), // header
+            Constraint::Min(1),    // body
+            Constraint::Length(1), // footer
         ])
         .split(full);
 
@@ -36,7 +36,7 @@ pub fn draw(f: &mut Frame, app: &App) {
 
     match app.active_tab {
         ActiveTab::Dashboard => dashboard::draw_dashboard(f, chunks[1], app),
-        ActiveTab::Timing    => timing::draw_timing(f, chunks[1], app),
+        ActiveTab::Timing => timing::draw_timing(f, chunks[1], app),
         ActiveTab::Standings => standings::draw_standings(f, chunks[1], app),
     }
 }

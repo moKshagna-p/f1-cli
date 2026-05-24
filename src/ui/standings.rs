@@ -14,10 +14,7 @@ use ratatui::{
 pub fn draw_standings(f: &mut Frame, area: Rect, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(65),
-            Constraint::Percentage(35),
-        ])
+        .constraints([Constraint::Percentage(65), Constraint::Percentage(35)])
         .split(area);
 
     draw_standings_table(f, chunks[0], app);
@@ -58,12 +55,19 @@ fn draw_standings_table(f: &mut Frame, area: Rect, app: &App) {
         .header(header)
         .block(
             Block::default()
-                .title(Span::styled(" 🏆  DRIVER STANDINGS ", style_bold(ACCENT_GOLD)))
+                .title(Span::styled(
+                    " 🏆  DRIVER STANDINGS ",
+                    style_bold(ACCENT_GOLD),
+                ))
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(BORDER))
                 .style(Style::default().bg(BG)),
         )
-        .highlight_style(Style::default().bg(BG_SELECTED).add_modifier(Modifier::BOLD));
+        .highlight_style(
+            Style::default()
+                .bg(BG_SELECTED)
+                .add_modifier(Modifier::BOLD),
+        );
 
     f.render_stateful_widget(table, area, &mut table_state);
 }
@@ -82,7 +86,7 @@ fn make_standings_row(s: &DriverStanding) -> Row<'static> {
 
     // Driver
     let indicator = if s.is_fastest_lap { "● " } else { "  " };
-    let ind_color  = if s.is_fastest_lap { ACCENT_PURPLE } else { BG };
+    let ind_color = if s.is_fastest_lap { ACCENT_PURPLE } else { BG };
     let drv_cell = Cell::from(Line::from(vec![
         Span::styled(indicator, style_bold(ind_color)),
         Span::styled(s.acronym.clone(), style_bold(driver_color)),
@@ -96,7 +100,8 @@ fn make_standings_row(s: &DriverStanding) -> Row<'static> {
     let nat_cell = Cell::from(Span::styled(s.country.clone(), style_dim(TEXT_SECONDARY)));
 
     // Best lap
-    let lap_str = s.lap_time
+    let lap_str = s
+        .lap_time
         .map(format_lap_time)
         .unwrap_or_else(|| "  —:—".to_string());
     let lap_cell = Cell::from(Span::styled(
@@ -109,10 +114,7 @@ fn make_standings_row(s: &DriverStanding) -> Row<'static> {
     ));
 
     // Driver number
-    let num_cell = Cell::from(Span::styled(
-        s.number.to_string(),
-        style_dim(TEXT_DIM),
-    ));
+    let num_cell = Cell::from(Span::styled(s.number.to_string(), style_dim(TEXT_DIM)));
 
     let bg = match s.position {
         1 => Style::default().bg(BG_PANEL).add_modifier(Modifier::BOLD),
@@ -120,18 +122,17 @@ fn make_standings_row(s: &DriverStanding) -> Row<'static> {
         _ => Style::default().bg(BG),
     };
 
-    Row::new(vec![pos_cell, drv_cell, team_cell, nat_cell, lap_cell, num_cell])
-        .height(1)
-        .style(bg)
+    Row::new(vec![
+        pos_cell, drv_cell, team_cell, nat_cell, lap_cell, num_cell,
+    ])
+    .height(1)
+    .style(bg)
 }
 
 fn draw_legend_and_info(f: &mut Frame, area: Rect, _app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(10),
-            Constraint::Min(1),
-        ])
+        .constraints([Constraint::Length(10), Constraint::Min(1)])
         .split(area);
 
     // Legend
@@ -175,15 +176,15 @@ fn draw_legend_and_info(f: &mut Frame, area: Rect, _app: &App) {
 
     // Teams color swatches
     let teams = [
-        ("Red Bull",    "3041d8"),
-        ("Ferrari",     "dc0000"),
-        ("Mercedes",    "00d2be"),
-        ("McLaren",     "ff8700"),
-        ("Aston Martin","006e3c"),
-        ("Alpine",      "0093cc"),
-        ("Williams",    "005aff"),
-        ("Haas",        "b6babd"),
-        ("RB",          "1e41ff"),
+        ("Red Bull", "3041d8"),
+        ("Ferrari", "dc0000"),
+        ("Mercedes", "00d2be"),
+        ("McLaren", "ff8700"),
+        ("Aston Martin", "006e3c"),
+        ("Alpine", "0093cc"),
+        ("Williams", "005aff"),
+        ("Haas", "b6babd"),
+        ("RB", "1e41ff"),
         ("Kick Sauber", "00e701"),
     ];
 

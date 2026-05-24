@@ -5,17 +5,21 @@ use crate::state::AppState;
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ActiveTab {
     Dashboard = 0,
-    Timing    = 1,
+    Timing = 1,
     Standings = 2,
 }
 
 impl ActiveTab {
-    pub const ALL: [ActiveTab; 3] = [ActiveTab::Dashboard, ActiveTab::Timing, ActiveTab::Standings];
+    pub const ALL: [ActiveTab; 3] = [
+        ActiveTab::Dashboard,
+        ActiveTab::Timing,
+        ActiveTab::Standings,
+    ];
 
     pub fn next(self) -> Self {
         match self {
             ActiveTab::Dashboard => ActiveTab::Timing,
-            ActiveTab::Timing    => ActiveTab::Standings,
+            ActiveTab::Timing => ActiveTab::Standings,
             ActiveTab::Standings => ActiveTab::Dashboard,
         }
     }
@@ -23,7 +27,7 @@ impl ActiveTab {
     pub fn prev(self) -> Self {
         match self {
             ActiveTab::Dashboard => ActiveTab::Standings,
-            ActiveTab::Timing    => ActiveTab::Dashboard,
+            ActiveTab::Timing => ActiveTab::Dashboard,
             ActiveTab::Standings => ActiveTab::Timing,
         }
     }

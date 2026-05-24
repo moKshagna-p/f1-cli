@@ -2,10 +2,10 @@ use crate::app::{ActiveTab, App};
 use crate::ui::theme::*;
 use ratatui::{
     layout::Alignment,
+    layout::Rect,
     text::{Line, Span},
     widgets::{Block, Paragraph},
     Frame,
-    layout::Rect,
 };
 
 pub fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
@@ -40,9 +40,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &App) {
 
     let footer = Paragraph::new(Line::from(spans))
         .alignment(Alignment::Left)
-        .block(Block::default().style(
-            ratatui::style::Style::default().bg(BG).fg(TEXT_DIM),
-        ));
+        .block(Block::default().style(ratatui::style::Style::default().bg(BG).fg(TEXT_DIM)));
 
     f.render_widget(footer, area);
 }

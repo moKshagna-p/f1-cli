@@ -35,10 +35,12 @@ pub fn poll_event(timeout: Duration) -> Option<AppEvent> {
                 (KeyCode::Left, _) => Some(AppEvent::PrevTab),
 
                 // Scrolling
-                (KeyCode::Char('j'), KeyModifiers::NONE)
-                | (KeyCode::Down, _) => Some(AppEvent::ScrollDown),
-                (KeyCode::Char('k'), KeyModifiers::NONE)
-                | (KeyCode::Up, _) => Some(AppEvent::ScrollUp),
+                (KeyCode::Char('j'), KeyModifiers::NONE) | (KeyCode::Down, _) => {
+                    Some(AppEvent::ScrollDown)
+                }
+                (KeyCode::Char('k'), KeyModifiers::NONE) | (KeyCode::Up, _) => {
+                    Some(AppEvent::ScrollUp)
+                }
 
                 // Manual refresh
                 (KeyCode::Char('r'), KeyModifiers::NONE) => Some(AppEvent::Refresh),

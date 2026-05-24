@@ -79,7 +79,9 @@ async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()
                     ui::draw_error_screen(f, &e.to_string());
                 })?;
                 if let Some(ev) = poll_event(Duration::from_millis(100)) {
-                    if ev == AppEvent::Quit { return Ok(()); }
+                    if ev == AppEvent::Quit {
+                        return Ok(());
+                    }
                 }
             }
         }
@@ -90,7 +92,9 @@ async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()
     let mut app = App::new(state);
 
     // Kick off initial telemetry fetch in background
-    let mut last_poll = Instant::now().checked_sub(Duration::from_secs(10)).unwrap_or(Instant::now());
+    let mut last_poll = Instant::now()
+        .checked_sub(Duration::from_secs(10))
+        .unwrap_or(Instant::now());
     let poll_interval = Duration::from_secs(5);
 
     // Tick interval: 200ms for smooth animations
@@ -175,10 +179,7 @@ fn make_spinner_app() -> App {
 }
 
 /// Drives the loading screen animation — this future is cancelled when init_data resolves
-async fn loading_loop(
-    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
-    _app: &App,
-) {
+async fn loading_loop(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>, _app: &App) {
     let mut spinner_idx = 0usize;
     let frames = app::SPINNER_FRAMES;
     loop {

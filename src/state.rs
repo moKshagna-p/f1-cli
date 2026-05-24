@@ -34,7 +34,7 @@ impl DriverStanding {
     pub fn gap_display(&self) -> String {
         match self.gap_to_leader {
             None => "LEADER".to_string(),
-            Some(g) if g == 0.0 => "LEADER".to_string(),
+            Some(0.0) => "LEADER".to_string(),
             Some(g) => format!("+{:.3}", g),
         }
     }
@@ -75,7 +75,10 @@ impl AppState {
                 number: d.driver_number,
                 acronym: d.name_acronym.clone(),
                 team: d.team_name.clone(),
-                team_color: d.team_colour.clone().unwrap_or_else(|| "FFFFFF".to_string()),
+                team_color: d
+                    .team_colour
+                    .clone()
+                    .unwrap_or_else(|| "FFFFFF".to_string()),
                 country: d.country_code.clone(),
                 position: (i + 1) as i32,
                 gap_to_leader: if i == 0 { None } else { Some(0.0) },
@@ -221,10 +224,18 @@ impl AppState {
             }
         }
 
-        if new_fastest_lap.is_some() { self.fastest_lap = new_fastest_lap; }
-        if new_fastest_s1.is_some() { self.fastest_s1 = new_fastest_s1; }
-        if new_fastest_s2.is_some() { self.fastest_s2 = new_fastest_s2; }
-        if new_fastest_s3.is_some() { self.fastest_s3 = new_fastest_s3; }
+        if new_fastest_lap.is_some() {
+            self.fastest_lap = new_fastest_lap;
+        }
+        if new_fastest_s1.is_some() {
+            self.fastest_s1 = new_fastest_s1;
+        }
+        if new_fastest_s2.is_some() {
+            self.fastest_s2 = new_fastest_s2;
+        }
+        if new_fastest_s3.is_some() {
+            self.fastest_s3 = new_fastest_s3;
+        }
 
         // ── Update standings ──────────────────────────────────────────────────
         for standing in &mut self.standings {
@@ -269,9 +280,7 @@ impl AppState {
             }
 
             // Fastest lap flag
-            standing.is_fastest_lap = self.fastest_lap
-                .map(|(fd, _)| fd == dn)
-                .unwrap_or(false);
+            standing.is_fastest_lap = self.fastest_lap.map(|(fd, _)| fd == dn).unwrap_or(false);
             standing.fastest_lap = if standing.is_fastest_lap {
                 self.fastest_lap.map(|(_, t)| t)
             } else {
@@ -283,9 +292,15 @@ impl AppState {
         self.standings.sort_by_key(|s| s.position);
     }
 
-    pub fn fastest_s1(&self) -> Option<i32> { self.fastest_s1.map(|(d, _)| d) }
-    pub fn fastest_s2(&self) -> Option<i32> { self.fastest_s2.map(|(d, _)| d) }
-    pub fn fastest_s3(&self) -> Option<i32> { self.fastest_s3.map(|(d, _)| d) }
+    pub fn fastest_s1(&self) -> Option<i32> {
+        self.fastest_s1.map(|(d, _)| d)
+    }
+    pub fn fastest_s2(&self) -> Option<i32> {
+        self.fastest_s2.map(|(d, _)| d)
+    }
+    pub fn fastest_s3(&self) -> Option<i32> {
+        self.fastest_s3.map(|(d, _)| d)
+    }
 
     pub fn seconds_since_update(&self) -> u64 {
         self.last_updated.elapsed().as_secs()

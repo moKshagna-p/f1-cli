@@ -10,8 +10,7 @@ use ratatui::{
 
 /// Full-screen loading splash shown while initializing
 pub fn draw_loading(f: &mut Frame, area: Rect, app: &App) {
-    let bg = Block::default()
-        .style(Style::default().bg(BG));
+    let bg = Block::default().style(Style::default().bg(BG));
     f.render_widget(bg, area);
 
     let vert = Layout::default()
@@ -35,35 +34,14 @@ pub fn draw_loading(f: &mut Frame, area: Rect, app: &App) {
     let splash_area = horiz[1];
 
     let logo = vec![
-        Line::from(Span::styled(
-            r"  ______ __  ",
-            style_bold(ACCENT_RED),
-        )),
-        Line::from(Span::styled(
-            r" |  ____|/_ | ",
-            style_bold(ACCENT_RED),
-        )),
-        Line::from(Span::styled(
-            r" | |__   | | ",
-            style_bold(ACCENT_RED),
-        )),
-        Line::from(Span::styled(
-            r" |  __|  | | ",
-            style_bold(ACCENT_RED),
-        )),
-        Line::from(Span::styled(
-            r" | |     | | ",
-            style_bold(ACCENT_RED),
-        )),
-        Line::from(Span::styled(
-            r" |_|     |_| ",
-            style_bold(ACCENT_RED),
-        )),
+        Line::from(Span::styled(r"  ______ __  ", style_bold(ACCENT_RED))),
+        Line::from(Span::styled(r" |  ____|/_ | ", style_bold(ACCENT_RED))),
+        Line::from(Span::styled(r" | |__   | | ", style_bold(ACCENT_RED))),
+        Line::from(Span::styled(r" |  __|  | | ", style_bold(ACCENT_RED))),
+        Line::from(Span::styled(r" | |     | | ", style_bold(ACCENT_RED))),
+        Line::from(Span::styled(r" |_|     |_| ", style_bold(ACCENT_RED))),
         Line::from(Span::raw("")),
-        Line::from(Span::styled(
-            " LIVE TIMING TUI",
-            style_bold(TEXT_PRIMARY),
-        )),
+        Line::from(Span::styled(" LIVE TIMING TUI", style_bold(TEXT_PRIMARY))),
         Line::from(Span::raw("")),
         Line::from(vec![
             Span::styled(format!("  {} ", app.spinner()), style_bold(ACCENT_GOLD)),
@@ -76,14 +54,12 @@ pub fn draw_loading(f: &mut Frame, area: Rect, app: &App) {
         )),
     ];
 
-    let splash = Paragraph::new(logo)
-        .alignment(Alignment::Center)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(BORDER_FOCUS))
-                .style(Style::default().bg(BG)),
-        );
+    let splash = Paragraph::new(logo).alignment(Alignment::Center).block(
+        Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(BORDER_FOCUS))
+            .style(Style::default().bg(BG)),
+    );
 
     f.render_widget(splash, splash_area);
 }
@@ -124,20 +100,15 @@ pub fn draw_error(f: &mut Frame, area: Rect, msg: &str) {
             style_dim(TEXT_DIM),
         )),
         Line::from(Span::raw("")),
-        Line::from(Span::styled(
-            "  Press q to quit",
-            style_bold(ACCENT_CYAN),
-        )),
+        Line::from(Span::styled("  Press q to quit", style_bold(ACCENT_CYAN))),
     ];
 
-    let panel = Paragraph::new(content)
-        .alignment(Alignment::Left)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(LIVE_RED))
-                .style(Style::default().bg(BG)),
-        );
+    let panel = Paragraph::new(content).alignment(Alignment::Left).block(
+        Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(LIVE_RED))
+            .style(Style::default().bg(BG)),
+    );
 
     f.render_widget(panel, horiz[1]);
 }

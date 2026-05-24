@@ -1,5 +1,5 @@
-use serde::{Deserialize, Deserializer, Serialize};
 use anyhow::{anyhow, Result};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::sync::Arc;
 
 fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
@@ -168,17 +168,18 @@ where
 
     // Happy path: parse as JSON array
     match serde_json::from_slice::<Vec<T>>(&bytes) {
-        Ok(arr) => return Ok(arr),
+        Ok(arr) => Ok(arr),
         Err(e) => {
             // Keep the error to include in the final message if it's not a known API error object
             let parse_err = e.to_string();
-            
+
             // Capture raw body for diagnostics
             let raw: String = String::from_utf8_lossy(&bytes).chars().take(300).collect();
 
             // Try to extract an error message from a JSON object response
             if let Ok(val) = serde_json::from_slice::<serde_json::Value>(&bytes) {
-                let msg = val.get("detail")
+                let msg = val
+                    .get("detail")
                     .or_else(|| val.get("error"))
                     .or_else(|| val.get("message"))
                     .and_then(|v| v.as_str());
@@ -199,7 +200,7 @@ where
                 }
             }
 
-            return Err(anyhow::anyhow!("Parse error: {}\nBody: {}", parse_err, raw));
+            Err(anyhow::anyhow!("Parse error: {}\nBody: {}", parse_err, raw))
         }
     }
 }

@@ -1,180 +1,113 @@
-# F1 Live Telemetry Dashboard (Rust + Ratatui)
+<div align="center">
+  <h1>🏎️ F1 Live Telemetry Dashboard</h1>
+  <p><strong>Blazingly fast, beautiful real-time F1 race data in your terminal.</strong></p>
+  <p>Built with <b>Rust</b> and <b>Ratatui</b> for maximum performance & gorgeous UI.</p>
+</div>
 
-Blazingly fast, beautiful real-time F1 race data in your terminal. Built with **Rust + Ratatui** for maximum performance & gorgeous UI.
+<br />
 
-## Features
+## ✨ Features
 
-🚀 **Ultra-Fast**
-- Compiled Rust binary (single executable)
-- Instant terminal rendering with Ratatui
-- Zero-overhead diffing algorithm
-- Sub-millisecond frame times
+- 🚀 **Ultra-Fast & Efficient**: Compiled Rust binary with a zero-overhead diffing algorithm and sub-millisecond frame times. Uses only ~10MB of disk space and <2% CPU at idle.
+- 🎨 **Beautiful UI**: Rich RGB color support (256-color + true color) with accurate F1 team colors.
+- 📊 **Full Telemetry**: Live driver positions, gaps, sector times (S1/S2/S3), pit stop counting, DRS status indicators, and tyre compounds.
+- 🎯 **Smart Polling**: Intelligent API polling (default 2s) that only renders changed data.
+- 🎬 **Animations**: Smooth visual animations for position changes (▲▼) fading over time.
 
-✨ **Beautiful UI**
-- RGB color support (256-color + true color)
-- Smooth animations (position changes ▲▼)
-- Live driver standings table
-- Team colors with hex→RGB conversion
-- Professional layout with borders & styling
-
-📊 **Full Telemetry**
-- Live driver positions & gaps
-- Sector times (S1/S2/S3)
-- Pit stop counting
-- DRS status indicator
-- Tyre compound display
-- Weather (temp, rain)
-- Fastest lap highlighting (●)
-
-🎯 **Smart Polling**
-- 2-second API polling (configurable)
-- Efficient state diffing
-- Only renders changed data
-- Position animations (3s fade)
-
-## Quick Start
+## 🛠️ Quick Start
 
 ### Prerequisites
-- Rust 1.70+ ([install](https://rustup.rs/))
-- Terminal with 256-color support
+- [Rust 1.70+](https://rustup.rs/) installed on your machine.
+- A modern terminal emulator with true-color (256-color) support.
 
-### Build & Run
+### Installation & Execution
+
+Clone the repository and run it directly using Cargo:
 
 ```bash
-# Build release binary (optimized)
-cargo build --release
+# Clone the repo
+git clone https://github.com/moKshagna-p/f1-cli.git
+cd f1-cli
 
-# Run
-./target/release/f1-dashboard
-
-# Or directly with cargo
+# Run directly (Cargo will build and run it for you)
 cargo run --release
 ```
 
-Exit: Press `q` or `ESC`
+**Controls:**
+- Press `q` or `ESC` to gracefully exit the dashboard.
 
-## Architecture
+## 📐 Architecture
 
-```
+The project follows a clean, decoupled architecture:
+
+```text
 src/
-├── main.rs          # Event loop, initialization
-├── api.rs           # OpenF1 API client (async with reqwest)
-├── state.rs         # State management with diffing
-├── ui.rs            # Ratatui rendering (beautiful layouts)
-└── event.rs         # Event handling
+├── main.rs          # Application entry point and TUI event loop
+├── app.rs           # Core state machine and tab navigation logic
+├── state.rs         # Data transformation and differential state updates
+├── api.rs           # Asynchronous OpenF1 API client (reqwest)
+├── event.rs         # Terminal input handling (crossterm)
+└── ui/              # Modular rendering components (Ratatui)
+    ├── dashboard.rs # Main telemetry grid
+    ├── header.rs    # Session metadata header
+    └── theme.rs     # Styling constants
 ```
 
 ### Data Flow
-```
+
+```text
 Event Loop (200ms ticks)
   ├─ Render UI (Ratatui)
-  ├─ Handle keyboard (q/ESC to quit)
-  └─ API polling (every 2s)
-      ├─ Fetch drivers, positions, laps, pits, weather (parallel)
-      ├─ Diffing in state manager
-      └─ Update standings
+  ├─ Poll keyboard events (crossterm)
+  └─ API Polling (every 2s)
+      ├─ Fetch drivers, positions, laps, pits, weather asynchronously
+      ├─ Calculate diffs in state manager
+      └─ Update live standings and trigger animations
 ```
 
-## Performance
+## ⚡ Performance Profiling
 
-| Metric | Value |
-|--------|-------|
-| Binary size | ~10MB (release) |
-| Memory usage | ~40-60MB |
-| Frame render time | <1ms |
-| CPU usage | <2% (idle) |
-| Network | ~15KB per poll (2s) |
-| Latency | 2-3s behind live |
+| Metric | Measurement | Notes |
+|--------|-------------|-------|
+| **Binary Size** | ~10 MB | Compiled `--release` binary |
+| **Memory Footprint**| ~40-60 MB | Depending on session size |
+| **Render Time** | <1 ms | Handled entirely in-memory |
+| **CPU Usage** | <2% | During idle polling periods |
+| **Network I/O** | ~15 KB | Compressed JSON payloads per 2s poll |
+| **API Latency** | 2-3s | Typical delay behind live track timing |
 
-## Display
+## 🧩 Dependencies
 
-```
-🏁 F1 LIVE TIMING  •  Yas Marina Circuit  •  Race
+Built using industry-standard Rust ecosystem libraries:
+- `ratatui` (TUI rendering framework)
+- `crossterm` (Terminal manipulation & events)
+- `tokio` (Asynchronous runtime)
+- `reqwest` (HTTP client)
+- `serde` (JSON serialization/deserialization)
 
-POS   DRV        LAP      GAP      S1       S2       S3      TYRES  DRS  PIT
-▲  1  ● VER    1:32.456 LEADER  0:31.234 0:32.123 0:29.099  M2    —     1
-   2  ○ LEC    1:32.678 +0.222  0:31.456 0:32.234 0:29.032  S4   DRS    2
-   3  ○ SAI    1:32.789 +0.333  0:31.567 0:32.345 0:29.143  M2    —     2
-```
+## 🔧 Configuration
 
-| Symbol | Meaning |
-|--------|---------|
-| ● | Fastest lap (magenta) |
-| ○ | Regular driver |
-| ▲ | Position improved |
-| ▼ | Position decreased |
-| RGB colors | Team colors |
+You can tweak the polling behavior by modifying the constants in `src/main.rs`:
 
-## Dependencies
-
-```toml
-ratatui = "0.26"        # TUI rendering
-crossterm = "0.27"      # Terminal handling
-tokio = "1"             # Async runtime
-reqwest = "0.11"        # HTTP client
-serde = "1.0"           # JSON parsing
-```
-
-## Configuration
-
-Edit `src/main.rs`:
 ```rust
-let mut api_ticker = interval(Duration::from_secs(2)); // Change polling interval
+// Adjust the primary polling interval (default: 2 seconds)
+let mut api_ticker = interval(Duration::from_secs(2));
 ```
 
-## Troubleshooting
+## 🐛 Troubleshooting
 
-| Issue | Fix |
-|-------|-----|
-| Compilation fails | Run `rustup update` |
-| No data | Check internet, ensure F1 session is active |
-| Terminal garbled | Widen to 100+ chars, enable 256-color mode |
-| No colors | Ensure terminal supports RGB colors |
+| Issue | Potential Fix |
+|-------|---------------|
+| **Compilation Error** | Ensure your Rust toolchain is up to date: `rustup update` |
+| **Garbled UI** | Make sure your terminal is wide enough (100+ columns). |
+| **Missing Colors** | Verify that your terminal supports RGB / True-Color. |
+| **No Data Showing** | Ensure you have an active internet connection and that an F1 session is currently live (or recently finished). |
 
-## Development
+## 📜 License
 
-Debug build (faster compile):
-```bash
-cargo run
-```
+MIT License — Use and modify freely.
 
-Release build (optimized):
-```bash
-cargo build --release
-```
-
-Check code:
-```bash
-cargo check
-```
-
-Test API directly:
-```bash
-curl https://api.openf1.org/v1/sessions | jq '.[0]'
-```
-
-## Benchmarks
-
-### Memory
-- JavaScript version: 50-100MB
-- Rust version: 40-60MB
-
-### Binary Size
-- JavaScript (with node): 200+ MB
-- Rust (single executable): ~10MB
-
-### Startup Time
-- JavaScript: 2-3s
-- Rust: <50ms
-
-### Frame Render
-- JavaScript: 50-100ms
-- Rust: <1ms
-
-## License
-
-MIT — Use freely.
-
----
-
-**Built for F1 fans who need speed** ⚡
+<div align="center">
+  <br/>
+  <i>Built for F1 fans who need speed ⚡</i>
+</div>

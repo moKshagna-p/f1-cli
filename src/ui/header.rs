@@ -27,9 +27,12 @@ pub fn draw_header(f: &mut Frame, area: Rect, app: &App) {
 fn draw_title(f: &mut Frame, area: Rect, _app: &App) {
     let title = Paragraph::new(Line::from(vec![
         Span::styled("▌", style_bold(ACCENT_RED)),
-        Span::styled("F1", Style::default()
-            .fg(Color::White)
-            .add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "F1",
+            Style::default()
+                .fg(Color::White)
+                .add_modifier(Modifier::BOLD),
+        ),
         Span::styled(" LIVE", style_bold(ACCENT_RED)),
         Span::styled(" TIMING", style_bold(TEXT_SECONDARY)),
         Span::styled("▐", style_bold(ACCENT_RED)),
@@ -47,17 +50,20 @@ fn draw_tabs(f: &mut Frame, area: Rect, app: &App) {
         let is_active = tab == app.active_tab;
         let label: &'static str = match tab {
             ActiveTab::Dashboard => "  Dashboard ",
-            ActiveTab::Timing    => "  Timing   ",
+            ActiveTab::Timing => "  Timing   ",
             ActiveTab::Standings => "  Standings",
         };
         let hint = format!("[{}]", i + 1);
 
         if is_active {
             all_spans.push(Span::styled(hint, style_bold(ACCENT_RED)));
-            all_spans.push(Span::styled(label, Style::default()
-                .fg(Color::White)
-                .bg(BG_SELECTED)
-                .add_modifier(Modifier::BOLD)));
+            all_spans.push(Span::styled(
+                label,
+                Style::default()
+                    .fg(Color::White)
+                    .bg(BG_SELECTED)
+                    .add_modifier(Modifier::BOLD),
+            ));
             all_spans.push(Span::raw(" "));
         } else {
             all_spans.push(Span::styled(hint, style_dim(TEXT_DIM)));
@@ -94,12 +100,10 @@ fn draw_status(f: &mut Frame, area: Rect, app: &App) {
             Span::styled("●", style_bold(dot_color)),
             Span::styled(format!(" {}", status_text), style_normal(TEXT_SECONDARY)),
         ]),
-        Line::from(vec![
-            Span::styled(
-                format!(" {} {} · {}", year, circuit, sname),
-                style_dim(TEXT_DIM),
-            ),
-        ]),
+        Line::from(vec![Span::styled(
+            format!(" {} {} · {}", year, circuit, sname),
+            style_dim(TEXT_DIM),
+        )]),
     ])
     .alignment(Alignment::Right)
     .block(Block::default().style(Style::default().bg(BG)));
