@@ -1,6 +1,15 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use anyhow::{anyhow, Result};
 use std::sync::Arc;
+
+fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    T: Default + Deserialize<'de>,
+    D: Deserializer<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
 
 const API_BASE: &str = "https://api.openf1.org/v1";
 
@@ -9,44 +18,44 @@ const API_BASE: &str = "https://api.openf1.org/v1";
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Session {
     pub session_key: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub session_name: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub session_type: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub circuit_short_name: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub circuit_key: i64,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub country_name: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub location: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub date_start: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub date_end: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub year: i32,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub meeting_name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Driver {
     pub driver_number: i32,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub name_acronym: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub first_name: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub last_name: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub full_name: String,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub team_name: String,
     #[serde(default)]
     pub team_colour: Option<String>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_null_default")]
     pub country_code: String,
     #[serde(default)]
     pub headshot_url: Option<String>,
@@ -127,7 +136,6 @@ pub struct Interval {
 
 #[derive(Debug, Clone, Default)]
 pub struct Telemetry {
-    pub drivers: Vec<Driver>,
     pub positions: Vec<Position>,
     pub laps: Vec<Lap>,
     pub pit_stops: Vec<PitStop>,
@@ -159,37 +167,41 @@ where
     let bytes = resp.bytes().await?;
 
     // Happy path: parse as JSON array
-    if let Ok(arr) = serde_json::from_slice::<Vec<T>>(&bytes) {
-        return Ok(arr);
-    }
+    match serde_json::from_slice::<Vec<T>>(&bytes) {
+        Ok(arr) => return Ok(arr),
+        Err(e) => {
+            // Keep the error to include in the final message if it's not a known API error object
+            let parse_err = e.to_string();
+            
+            // Capture raw body for diagnostics
+            let raw: String = String::from_utf8_lossy(&bytes).chars().take(300).collect();
 
-    // Capture raw body for diagnostics
-    let raw: String = String::from_utf8_lossy(&bytes).chars().take(300).collect();
+            // Try to extract an error message from a JSON object response
+            if let Ok(val) = serde_json::from_slice::<serde_json::Value>(&bytes) {
+                let msg = val.get("detail")
+                    .or_else(|| val.get("error"))
+                    .or_else(|| val.get("message"))
+                    .and_then(|v| v.as_str());
 
-    // Try to extract an error message from a JSON object response
-    if let Ok(val) = serde_json::from_slice::<serde_json::Value>(&bytes) {
-        let msg = val.get("detail")
-            .or_else(|| val.get("error"))
-            .or_else(|| val.get("message"))
-            .and_then(|v| v.as_str());
+                if let Some(text) = msg {
+                    // "No results" is a legitimate empty response
+                    if text.to_lowercase().contains("no results")
+                        || text.to_lowercase().contains("not found")
+                    {
+                        return Ok(vec![]);
+                    }
+                    return Err(anyhow::anyhow!("API error: {}", text));
+                }
 
-        if let Some(text) = msg {
-            // "No results" is a legitimate empty response
-            if text.to_lowercase().contains("no results")
-                || text.to_lowercase().contains("not found")
-            {
-                return Ok(vec![]);
+                // Empty JSON object {} = no data
+                if val.as_object().map(|o| o.is_empty()).unwrap_or(false) {
+                    return Ok(vec![]);
+                }
             }
-            return Err(anyhow!("API error: {}", text));
-        }
 
-        // Empty JSON object {} = no data
-        if val.as_object().map(|o| o.is_empty()).unwrap_or(false) {
-            return Ok(vec![]);
+            return Err(anyhow::anyhow!("Parse error: {}\nBody: {}", parse_err, raw));
         }
     }
-
-    Err(anyhow!("Unexpected API response\nBody: {}", raw))
 }
 
 // ─── API Functions ────────────────────────────────────────────────────────────
@@ -242,7 +254,6 @@ pub async fn fetch_all_telemetry(client: &reqwest::Client, session_key: i64) -> 
     );
 
     Ok(Telemetry {
-        drivers: vec![],
         positions: positions_r.unwrap_or_default(),
         laps: laps_r.unwrap_or_default(),
         pit_stops: pits_r.unwrap_or_default(),
