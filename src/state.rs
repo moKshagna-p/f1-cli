@@ -8,7 +8,6 @@ use std::time::Instant;
 pub struct DriverStanding {
     pub number: i32,
     pub acronym: String,
-    pub full_name: String,
     pub team: String,
     pub team_color: String,
     pub country: String,
@@ -47,27 +46,12 @@ impl DriverStanding {
             Some(g) => format!("+{:.3}", g),
         }
     }
-
-    pub fn lap_time_display(&self) -> String {
-        match self.lap_time {
-            None => "—".to_string(),
-            Some(t) => format_lap_time(t),
-        }
-    }
-
-    pub fn sector_display(&self, s: Option<f64>) -> String {
-        match s {
-            None => "  —  ".to_string(),
-            Some(t) => format!("{:06.3}", t),
-        }
-    }
 }
 
 // ─── App State ────────────────────────────────────────────────────────────────
 
 pub struct AppState {
     pub session: Session,
-    pub drivers: Vec<Driver>,
     pub standings: Vec<DriverStanding>,
     pub weather: Weather,
     pub last_updated: Instant,
@@ -90,7 +74,6 @@ impl AppState {
             .map(|(i, d)| DriverStanding {
                 number: d.driver_number,
                 acronym: d.name_acronym.clone(),
-                full_name: d.full_name.clone(),
                 team: d.team_name.clone(),
                 team_color: d.team_colour.clone().unwrap_or_else(|| "FFFFFF".to_string()),
                 country: d.country_code.clone(),
@@ -119,7 +102,6 @@ impl AppState {
 
         Self {
             session,
-            drivers,
             standings,
             weather: Weather::default(),
             last_updated: Instant::now(),
@@ -307,10 +289,6 @@ impl AppState {
 
     pub fn seconds_since_update(&self) -> u64 {
         self.last_updated.elapsed().as_secs()
-    }
-
-    pub fn tick_count(&self) -> u64 {
-        self.tick
     }
 }
 

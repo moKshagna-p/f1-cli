@@ -12,8 +12,6 @@ pub enum ActiveTab {
 impl ActiveTab {
     pub const ALL: [ActiveTab; 3] = [ActiveTab::Dashboard, ActiveTab::Timing, ActiveTab::Standings];
 
-    pub fn index(self) -> usize { self as usize }
-
     pub fn next(self) -> Self {
         match self {
             ActiveTab::Dashboard => ActiveTab::Timing,
@@ -27,14 +25,6 @@ impl ActiveTab {
             ActiveTab::Dashboard => ActiveTab::Standings,
             ActiveTab::Timing    => ActiveTab::Dashboard,
             ActiveTab::Standings => ActiveTab::Timing,
-        }
-    }
-
-    pub fn label(self) -> &'static str {
-        match self {
-            ActiveTab::Dashboard => " 󰕮  Dashboard ",
-            ActiveTab::Timing    => "  Timing    ",
-            ActiveTab::Standings => " 󰊫  Standings ",
         }
     }
 }
