@@ -43,3 +43,6 @@ Thumbs.db
 # Added by cargo
 
 /target
+
+# Antigravity CLI
+.antigravitycli/
