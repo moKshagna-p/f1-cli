@@ -2,6 +2,30 @@ use crate::api::{Driver, Session, Telemetry, Weather};
 use std::collections::HashMap;
 use std::time::Instant;
 
+fn format_gap(val: &serde_json::Value) -> Option<String> {
+    match val {
+        serde_json::Value::Number(n) => {
+            if let Some(f) = n.as_f64() {
+                if f <= 0.001 {
+                    None
+                } else {
+                    Some(format!("+{:.3}", f))
+                }
+            } else {
+                Some(n.to_string())
+            }
+        }
+        serde_json::Value::String(s) => {
+            if s.is_empty() || s == "0.0" {
+                None
+            } else {
+                Some(s.clone())
+            }
+        }
+        _ => None,
+    }
+}
+
 // ─── Driver Standing Record ───────────────────────────────────────────────────
 
 #[derive(Debug, Clone)]
@@ -12,10 +36,10 @@ pub struct DriverStanding {
     pub team_color: String,
     pub country: String,
     pub position: i32,
-    /// Gap to the leader in seconds (None = leader)
-    pub gap_to_leader: Option<f64>,
+    /// Gap to the leader in seconds or text (None = leader)
+    pub gap_to_leader: Option<String>,
     /// Gap to the car directly ahead
-    pub interval: Option<f64>,
+    pub interval: Option<String>,
     pub lap_number: i32,
     pub lap_time: Option<f64>,
     pub sector1: Option<f64>,
@@ -30,20 +54,27 @@ pub struct DriverStanding {
     pub delta_fade: u8, // ticks remaining for animation (0 = done)
 }
 
+#[derive(Debug, Clone)]
+pub struct ChampionshipStanding {
+    pub position: String,
+    pub points: String,
+    pub wins: String,
+    pub driver_name: String,
+    pub team_color: String,
+}
+
 impl DriverStanding {
     pub fn gap_display(&self) -> String {
-        match self.gap_to_leader {
+        match &self.gap_to_leader {
             None => "LEADER".to_string(),
-            Some(0.0) => "LEADER".to_string(),
-            Some(g) => format!("+{:.3}", g),
+            Some(s) => s.clone(),
         }
     }
 
     pub fn interval_display(&self) -> String {
-        match self.interval {
+        match &self.interval {
             None => "—".to_string(),
-            Some(g) if g <= 0.0 => "—".to_string(),
-            Some(g) => format!("+{:.3}", g),
+            Some(s) => s.clone(),
         }
     }
 }
@@ -53,6 +84,7 @@ impl DriverStanding {
 pub struct AppState {
     pub session: Session,
     pub standings: Vec<DriverStanding>,
+    pub championship: Vec<ChampionshipStanding>,
     pub weather: Weather,
     pub last_updated: Instant,
     pub error: Option<String>,
@@ -81,7 +113,7 @@ impl AppState {
                     .unwrap_or_else(|| "FFFFFF".to_string()),
                 country: d.country_code.clone(),
                 position: (i + 1) as i32,
-                gap_to_leader: if i == 0 { None } else { Some(0.0) },
+                gap_to_leader: if i == 0 { None } else { Some(0.0.to_string()) },
                 interval: None,
                 lap_number: 0,
                 lap_time: None,
@@ -106,6 +138,7 @@ impl AppState {
         Self {
             session,
             standings,
+            championship: Vec::new(),
             weather: Weather::default(),
             last_updated: Instant::now(),
             error: None,
@@ -139,25 +172,31 @@ impl AppState {
         // ── Positions ─────────────────────────────────────────────────────────
         // Collect latest position per driver (last entry wins)
         let mut latest_pos: HashMap<i32, i32> = HashMap::new();
-        let mut latest_gap: HashMap<i32, f64> = HashMap::new();
+        let mut latest_gap: HashMap<i32, String> = HashMap::new();
         for pos in &telemetry.positions {
             if let Some(p) = pos.position {
                 latest_pos.insert(pos.driver_number, p);
             }
-            if let Some(g) = pos.gap_to_leader {
-                latest_gap.insert(pos.driver_number, g);
+            if let Some(g) = &pos.gap_to_leader {
+                if let Some(s) = format_gap(g) {
+                    latest_gap.insert(pos.driver_number, s);
+                }
             }
         }
 
         // ── Intervals ─────────────────────────────────────────────────────────
-        let mut latest_interval: HashMap<i32, f64> = HashMap::new();
-        let mut latest_interval_gap: HashMap<i32, f64> = HashMap::new();
+        let mut latest_interval: HashMap<i32, String> = HashMap::new();
+        let mut latest_interval_gap: HashMap<i32, String> = HashMap::new();
         for iv in &telemetry.intervals {
-            if let Some(g) = iv.gap_to_leader {
-                latest_interval_gap.insert(iv.driver_number, g);
+            if let Some(g) = &iv.gap_to_leader {
+                if let Some(s) = format_gap(g) {
+                    latest_interval_gap.insert(iv.driver_number, s);
+                }
             }
-            if let Some(i) = iv.interval {
-                latest_interval.insert(iv.driver_number, i);
+            if let Some(i) = &iv.interval {
+                if let Some(s) = format_gap(i) {
+                    latest_interval.insert(iv.driver_number, s);
+                }
             }
         }
 
@@ -253,15 +292,15 @@ impl AppState {
             }
 
             // Gap — prefer intervals endpoint, fall back to positions
-            if let Some(&gap) = latest_interval_gap.get(&dn) {
-                standing.gap_to_leader = if gap <= 0.001 { None } else { Some(gap) };
-            } else if let Some(&gap) = latest_gap.get(&dn) {
-                standing.gap_to_leader = if gap <= 0.001 { None } else { Some(gap) };
+            if let Some(gap) = latest_interval_gap.get(&dn) {
+                standing.gap_to_leader = Some(gap.clone());
+            } else if let Some(gap) = latest_gap.get(&dn) {
+                standing.gap_to_leader = Some(gap.clone());
             }
 
             // Interval to car ahead
-            if let Some(&iv) = latest_interval.get(&dn) {
-                standing.interval = if iv <= 0.0 { None } else { Some(iv) };
+            if let Some(iv) = latest_interval.get(&dn) {
+                standing.interval = Some(iv.clone());
             }
 
             // Lap data

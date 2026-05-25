@@ -17,7 +17,7 @@ pub fn draw_dashboard(f: &mut Frame, area: Rect, app: &App) {
         .constraints([Constraint::Percentage(62), Constraint::Percentage(38)])
         .split(area);
 
-    draw_timing_table(f, cols[0], app);
+    draw_championship_table(f, cols[0], app);
 
     let right_rows = Layout::default()
         .direction(Direction::Vertical)
@@ -28,10 +28,10 @@ pub fn draw_dashboard(f: &mut Frame, area: Rect, app: &App) {
     draw_weather_card(f, right_rows[1], app);
 }
 
-// ─── Mini Timing Table ────────────────────────────────────────────────────────
+// ─── Championship Standings Table ─────────────────────────────────────────────
 
-pub fn draw_timing_table(f: &mut Frame, area: Rect, app: &App) {
-    let header_cells = ["POS", "  DRIVER", "GAP", "INTERVAL", "LAP", "PITS"]
+pub fn draw_championship_table(f: &mut Frame, area: Rect, app: &App) {
+    let header_cells = ["POS", "  DRIVER", "POINTS", "WINS"]
         .iter()
         .map(|h| Cell::from(*h).style(style_bold(ACCENT_GOLD)));
     let header = Row::new(header_cells)
@@ -40,25 +40,23 @@ pub fn draw_timing_table(f: &mut Frame, area: Rect, app: &App) {
 
     let rows: Vec<Row> = app
         .state
-        .standings
+        .championship
         .iter()
-        .map(|s| make_dashboard_row(s, &app.state))
+        .map(|s| make_championship_row(s))
         .collect();
 
     let widths = [
         Constraint::Length(5),  // POS
-        Constraint::Length(10), // DRIVER
-        Constraint::Min(10),    // GAP
-        Constraint::Min(10),    // INTERVAL
-        Constraint::Length(5),  // LAP
-        Constraint::Length(4),  // PITS
+        Constraint::Length(25), // DRIVER
+        Constraint::Length(8),  // POINTS
+        Constraint::Length(5),  // WINS
     ];
 
     let table = Table::new(rows, widths)
         .header(header)
         .block(
             Block::default()
-                .title(Span::styled(" ⏱  LIVE TIMING ", style_bold(ACCENT_RED)))
+                .title(Span::styled(" 🏆  DRIVER CHAMPIONSHIP ", style_bold(ACCENT_GOLD)))
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(BORDER))
                 .style(Style::default().bg(BG)),
@@ -68,85 +66,32 @@ pub fn draw_timing_table(f: &mut Frame, area: Rect, app: &App) {
     f.render_widget(table, area);
 }
 
-fn make_dashboard_row<'a>(s: &'a DriverStanding, _state: &crate::state::AppState) -> Row<'a> {
+fn make_championship_row<'a>(s: &'a crate::state::ChampionshipStanding) -> Row<'a> {
     let driver_color = hex_color(&s.team_color);
 
-    // Position with delta arrow
-    let pos_cell = {
-        let (arrow, arrow_color) = match s.position_delta {
-            1 => ("▲", ACCENT_GREEN),
-            -1 => ("▼", LIVE_RED),
-            _ => (" ", TEXT_DIM),
-        };
-        Cell::from(Line::from(vec![
-            Span::styled(arrow, style_bold(arrow_color)),
-            Span::styled(format!("{:2}", s.position), style_bold(TEXT_PRIMARY)),
-        ]))
-    };
-
-    // Driver with fastest lap indicator
-    let drv_cell = {
-        let indicator = if s.is_fastest_lap { "● " } else { "  " };
-        let ind_color = if s.is_fastest_lap {
-            ACCENT_PURPLE
-        } else {
-            TEXT_DIM
-        };
-        Cell::from(Line::from(vec![
-            Span::styled(indicator, style_bold(ind_color)),
-            Span::styled(s.acronym.clone(), style_bold(driver_color)),
-        ]))
-    };
-
-    let gap_cell = Cell::from(Span::styled(
-        s.gap_display(),
-        if s.gap_to_leader.is_none() {
-            style_bold(ACCENT_GOLD)
-        } else {
-            style_normal(TEXT_PRIMARY)
-        },
+    let pos_cell = Cell::from(Span::styled(
+        format!("{:2}", s.position),
+        style_bold(TEXT_PRIMARY),
     ));
 
-    let interval_cell = Cell::from(Span::styled(
-        s.interval_display(),
+    let drv_cell = Cell::from(Span::styled(
+        s.driver_name.clone(),
+        style_bold(driver_color),
+    ));
+
+    let pts_cell = Cell::from(Span::styled(
+        s.points.clone(),
+        style_normal(TEXT_PRIMARY),
+    ));
+
+    let wins_cell = Cell::from(Span::styled(
+        s.wins.clone(),
         style_normal(TEXT_SECONDARY),
     ));
 
-    let lap_cell = Cell::from(Span::styled(
-        if s.lap_number > 0 {
-            format!("L{}", s.lap_number)
-        } else {
-            "—".to_string()
-        },
-        style_normal(TEXT_SECONDARY),
-    ));
-
-    let pit_cell = Cell::from(Span::styled(
-        if s.pit_stops > 0 {
-            s.pit_stops.to_string()
-        } else {
-            "—".to_string()
-        },
-        style_normal(TEXT_DIM),
-    ));
-
-    let height = 1u16;
-    let style = if s.is_fastest_lap {
-        Style::default().bg(BG_PANEL).add_modifier(Modifier::BOLD)
-    } else {
-        Style::default().bg(BG)
-    };
-
-    Row::new(vec![
-        pos_cell,
-        drv_cell,
-        gap_cell,
-        interval_cell,
-        lap_cell,
-        pit_cell,
-    ])
-    .height(height)
-    .style(style)
+    Row::new(vec![pos_cell, drv_cell, pts_cell, wins_cell])
+        .height(1)
+        .style(Style::default().bg(BG))
 }
 
 // ─── Session Info Card ────────────────────────────────────────────────────────

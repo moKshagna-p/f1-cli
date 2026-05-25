@@ -61,7 +61,7 @@ async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()
     let spinner_app = make_spinner_app();
 
     // ── Loading screen loop ────────────────────────────────────────────────
-    let (session, drivers) = tokio::select! {
+    let (session, drivers, championship) = tokio::select! {
         result = init_data(http.clone()) => result,
         _ = loading_loop(terminal, &spinner_app) => {
             // This branch is cancelled when init_data completes
@@ -70,9 +70,9 @@ async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()
     };
 
     // Handle init failure
-    let (session, drivers) = match (session, drivers) {
-        (Ok(s), Ok(d)) => (s, d),
-        (Err(e), _) | (_, Err(e)) => {
+    let (session, drivers, championship) = match (session, drivers, championship) {
+        (Ok(s), Ok(d), Ok(c)) => (s, d, c),
+        (Err(e), _, _) | (_, Err(e), _) | (_, _, Err(e)) => {
             // Show error screen, wait for q
             loop {
                 terminal.draw(|f| {
@@ -88,7 +88,28 @@ async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()
     };
 
     // ── Build app ─────────────────────────────────────────────────────────
-    let state = state::AppState::new(session, drivers);
+    let mut state = state::AppState::new(session, drivers);
+    
+    // Map ErgastDriverStanding -> ChampionshipStanding
+    state.championship = championship.into_iter().map(|s| state::ChampionshipStanding {
+        position: s.position,
+        points: s.points,
+        wins: s.wins,
+        driver_name: format!("{} {}", s.driver.given_name, s.driver.family_name),
+        team_color: {
+            // Find driver in standings to get their team color
+            let mut color = "FFFFFF".to_string();
+            let p_num = s.driver.permanent_number.parse::<i32>().unwrap_or(0);
+            for d in &state.standings {
+                if d.number == p_num {
+                    color = d.team_color.clone();
+                    break;
+                }
+            }
+            color
+        },
+    }).collect();
+
     let mut app = App::new(state);
 
     // Kick off initial telemetry fetch in background
@@ -158,16 +179,24 @@ async fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/// Fetch session + drivers in parallel, return Results separately
+/// Fetch session + drivers + championship in parallel
 async fn init_data(
     client: Arc<reqwest::Client>,
-) -> (Result<api::Session>, Result<Vec<api::Driver>>) {
+) -> (Result<api::Session>, Result<Vec<api::Driver>>, Result<Vec<api::ErgastDriverStanding>>) {
     let session = api::fetch_latest_session(&client).await;
-    let drivers = match &session {
-        Ok(s) => api::fetch_drivers_for_session(&client, s.session_key).await,
-        Err(e) => Err(anyhow::anyhow!("{}", e)),
+    
+    let drivers_fut = async {
+        match &session {
+            Ok(s) => api::fetch_drivers_for_session(&client, s.session_key).await,
+            Err(e) => Err(anyhow::anyhow!("{}", e)),
+        }
     };
-    (session, drivers)
+
+    let champ_fut = api::fetch_championship_standings(&client);
+
+    let (drivers, championship) = tokio::join!(drivers_fut, champ_fut);
+
+    (session, drivers, championship)
 }
 
 /// A lightweight spinner-only App for use during the loading screen

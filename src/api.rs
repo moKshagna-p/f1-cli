@@ -66,7 +66,7 @@ pub struct Position {
     pub driver_number: i32,
     pub position: Option<i32>,
     #[serde(default)]
-    pub gap_to_leader: Option<f64>,
+    pub gap_to_leader: Option<serde_json::Value>,
     #[serde(default)]
     pub date: Option<String>,
 }
@@ -125,11 +125,56 @@ pub struct Weather {
 pub struct Interval {
     pub driver_number: i32,
     #[serde(default)]
-    pub gap_to_leader: Option<f64>,
+    pub gap_to_leader: Option<serde_json::Value>,
     #[serde(default)]
-    pub interval: Option<f64>,
+    pub interval: Option<serde_json::Value>,
     #[serde(default)]
     pub date: Option<String>,
+}
+
+// ─── Ergast / Jolpi Championship Standings ─────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErgastResponse {
+    #[serde(rename = "MRData")]
+    pub mr_data: MRData,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MRData {
+    #[serde(rename = "StandingsTable")]
+    pub standings_table: StandingsTable,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StandingsTable {
+    #[serde(rename = "StandingsLists")]
+    pub standings_lists: Vec<StandingsList>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StandingsList {
+    #[serde(rename = "DriverStandings")]
+    pub driver_standings: Vec<ErgastDriverStanding>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErgastDriverStanding {
+    pub position: String,
+    pub points: String,
+    pub wins: String,
+    #[serde(rename = "Driver")]
+    pub driver: ErgastDriver,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErgastDriver {
+    #[serde(rename = "permanentNumber")]
+    pub permanent_number: String,
+    #[serde(rename = "givenName")]
+    pub given_name: String,
+    #[serde(rename = "familyName")]
+    pub family_name: String,
 }
 
 // ─── Aggregated Telemetry Bundle ──────────────────────────────────────────────
@@ -280,8 +325,29 @@ async fn fetch_pit_stops(client: &reqwest::Client, session_key: i64) -> Result<V
 
 async fn fetch_weather(client: &reqwest::Client, session_key: i64) -> Result<Weather> {
     let url = format!("{}/weather?session_key={}", API_BASE, session_key);
-    let readings: Vec<Weather> = fetch_array(client, &url).await?;
-    Ok(readings.into_iter().last().unwrap_or_default())
+    let mut arr = fetch_array::<Weather>(client, &url).await?;
+    if arr.is_empty() {
+        Ok(Weather::default())
+    } else {
+        Ok(arr.remove(arr.len() - 1))
+    }
+}
+
+pub async fn fetch_championship_standings(client: &reqwest::Client) -> Result<Vec<ErgastDriverStanding>> {
+    let url = "https://api.jolpi.ca/ergast/f1/current/driverStandings.json";
+    let resp = client
+        .get(url)
+        .send()
+        .await?
+        .error_for_status()?
+        .json::<ErgastResponse>()
+        .await?;
+
+    if let Some(list) = resp.mr_data.standings_table.standings_lists.into_iter().next() {
+        Ok(list.driver_standings)
+    } else {
+        Ok(vec![])
+    }
 }
 
 async fn fetch_intervals(client: &reqwest::Client, session_key: i64) -> Result<Vec<Interval>> {
